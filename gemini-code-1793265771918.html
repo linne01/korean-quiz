@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>문법 도둑을 잡아라! - 피동·인용표현 복습 게임</title>
+  <style>
+    :root {
+      --primary: #4A90E2;
+      --primary-dark: #357ABD;
+      --secondary: #FF6B6B;
+      --accent: #FFD166;
+      --bg-color: #F4F7F6;
+      --card-bg: #FFFFFF;
+      --text-main: #2C3E50;
+      --text-muted: #7F8C8D;
+      --success: #2ECC71;
+      --danger: #E74C3C;
+      --border-radius: 12px;
+      --shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      align-items: center;
+      padding: 16px;
+    }
+
+    #app-container {
+      width: 100%;
+      max-width: 960px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 650px;
+      position: relative;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-light {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .btn-light:hover {
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    .btn-action {
+      background: var(--accent);
+      color: #333;
+    }
+
+    .btn-action:hover {
+      background: #fcc438;
+      transform: translateY(-2px);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    /* Game Screen */
+    .screen {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      padding: 20px;
+      position: relative;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    /* Start Screen */
+    #start-screen {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 24px;
+      padding: 40px 20px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #EBF3FA 100%);
+    }
+
+    .game-logo {
+      font-size: 3.5rem;
+      margin-bottom: -10px;
+    }
+
+    .game-title-large {
+      font-size: 2.2rem;
+      color: var(--primary-dark);
+      font-weight: 800;
+    }
+
+    .game-description {
+      max-width: 520px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+
+    .rules-summary {
+      background: white;
+      padding: 20px;
+      border-radius: var(--border-radius);
+      border: 1px solid #E2E8F0;
+      text-align: left;
+      max-width: 520px;
+      width: 100%;
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    .rules-summary ul {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+
+    /* Table / Game Board */
+    #game-board {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 16px;
+      height: 100%;
+      flex: 1;
+    }
+
+    /* Opponents Area */
+    .opponents-container {
+      display: flex;
+      justify-content: space-around;
+      gap: 16px;
+    }
+
+    .player-area {
+      background: #F8FAFC;
+      border: 2px solid #E2E8F0;
+      border-radius: var(--border-radius);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      transition: border-color 0.3s;
+    }
+
+    .player-area.active-turn {
+      border-color: var(--primary);
+      box-shadow: 0 0 12px rgba(74, 144, 226, 0.3);
+      background: #F0F7FF;
+    }
+
+    .player-avatar {
+      font-size: 1.8rem;
+      margin-bottom: 4px;
+    }
+
+    .player-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+    }
+
+    .player-card-count {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: #E2E8F0;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+
+    .cards-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+      min-height: 70px;
+      align-items: center;
+    }
+
+    /* Card Styling */
+    .card {
+      width: 60px;
+      height: 85px;
+      background: var(--card-bg);
+      border: 2px solid #CBD5E1;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 6px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      position: relative;
+      text-align: center;
+      font-size: 0.75rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+
+    .card.back {
+      background: linear-gradient(135deg, #3A6073, #3A7BD5);
+      border-color: #2C3E50;
+      color: white;
+    }
+
+    .card.back::after {
+      content: "📖";
+      font-size: 1.4rem;
+    }
+
+    .card.joker {
+      border-color: var(--danger);
+      background: #FFF5F5;
+    }
+
+    .card.joker .card-tag {
+      background: var(--danger);
+      color: white;
+    }
+
+    .card-tag {
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 2px 4px;
+      border-radius: 4px;
+      background: #E2E8F0;
+      color: #475569;
+      margin-bottom: 4px;
+    }
+
+    .card-text {
+      font-size: 0.7rem;
+      font-weight: 600;
+      line-height: 1.2;
+      word-break: keep-all;
+    }
+
+    /* Player Hand Card (Larger) */
+    .user-hand .card {
+      width: 85px;
+      height: 120px;
+      padding: 8px;
+      font-size: 0.85rem;
+    }
+
+    .user-hand .card-tag {
+      font-size: 0.65rem;
+    }
+
+    .user-hand .card-text {
+      font-size: 0.78rem;
+    }
+
+    /* Center Board Area */
+    .board-center {
+      background: #F1F5F9;
+      border-radius: var(--border-radius);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      position: relative;
+      gap: 10px;
+    }
+
+    .status-msg {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      text-align: center;
+      padding: 8px 16px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .discard-pile {
+      display: flex;
+      gap: -20px;
+      align-items: center;
+      justify-content: center;
+      min-height: 80px;
+    }
+
+    .discard-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* User Area */
+    .user-area {
+      background: #EBF5FF;
+      border: 2px solid var(--primary);
+      border-radius: var(--border-radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .user-hand {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    /* Modals */
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      max-width: 550px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+      animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes modalPop {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #F1F5F9;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Teacher Feedback Component */
+    .teacher-box {
+      display: flex;
+      gap: 12px;
+      background: #F0F7FF;
+      border-left: 4px solid var(--primary);
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      margin-top: 16px;
+      align-items: flex-start;
+    }
+
+    .teacher-avatar {
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .teacher-text {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #334155;
+    }
+
+    .teacher-text strong {
+      color: var(--primary-dark);
+    }
+
+    /* Quiz Modal Specific */
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .quiz-option {
+      background: #F8FAFC;
+      border: 2px solid #CBD5E1;
+      padding: 12px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-align: left;
+      transition: all 0.2s;
+    }
+
+    .quiz-option:hover {
+      background: #E2E8F0;
+      border-color: #94A3B8;
+    }
+
+    .quiz-option.correct {
+      background: #DCFCE7;
+      border-color: var(--success);
+      color: #166534;
+    }
+
+    .quiz-option.incorrect {
+      background: #FEE2E2;
+      border-color: var(--danger);
+      color: #991B1B;
+    }
+
+    /* Dictionary Modal */
+    .dict-section {
+      margin-bottom: 20px;
+    }
+
+    .dict-section h3 {
+      font-size: 1rem;
+      color: var(--primary-dark);
+      border-bottom: 2px solid #E2E8F0;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+    }
+
+    .dict-item {
+      background: #F8FAFC;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .dict-item strong {
+      color: var(--secondary);
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      margin-right: 6px;
+    }
+
+    .badge-passive { background: #E0F2FE; color: #0369A1; }
+    .badge-quote { background: #FEF3C7; color: #B45309; }
+
+    /* Animation effects */
+    .card-match-anim {
+      animation: matchGlow 0.6s ease-out;
+    }
+
+    @keyframes matchGlow {
+      0% { transform: scale(1); box-shadow: 0 0 0 rgba(46, 204, 113, 0); }
+      50% { transform: scale(1.1); box-shadow: 0 0 20px rgba(46, 204, 113, 0.8); }
+      100% { transform: scale(1); box-shadow: 0 0 0 rgba(46, 204, 113, 0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app-container">
+    <!-- Header -->
+    <header>
+      <h1>🕵️‍♂️ 문법 도둑을 잡아라!</h1>
+      <div class="header-btns">
+        <button class="btn btn-light" id="btn-dict">📖 문법 사전</button>
+        <button class="btn btn-light" id="btn-restart">🔄 다시 시작</button>
+      </div>
+    </header>
+
+    <!-- 1. Start Screen -->
+    <div id="start-screen" class="screen active">
+      <div class="game-logo">🃏🔍</div>
+      <h2 class="game-title-large">피동표현 & 인용표현<br>복습 카드 게임</h2>
+      <p class="game-description">
+        친구들(민수, 지은)과 함께 카드를 뽑으며 피동표현과 인용표현의 올바른 쓰임을 복습해보세요! 
+        짝을 맞출 때 나오는 퀴즈를 맞혀야 카드를 버릴 수 있습니다.
+      </p>
+
+      <div class="rules-summary">
+        <strong>📌 게임 규칙 가이드</strong>
+        <ul>
+          <li><strong>카드 맞추기:</strong> 문제/오문 카드와 바른 표현/설명 카드가 짝을 이룹니다.</li>
+          <li><strong>문법 검증 퀴즈:</strong> 짝이 맞는 카드를 버릴 때 문법 질문을 통과해야 합니다.</li>
+          <li><strong>오개념 교정:</strong> 틀리면 김국어 선생님의 맞춤 피동·인용 피드백이 제공됩니다.</li>
+          <li><strong>조커(문법 도둑):</strong> 마지막까지 조커를 가진 사람이 패배! (단, 패배 구제 찬스 퀴즈 제공)</li>
+        </ul>
+      </div>
+
+      <button class="btn btn-action" id="btn-start-game" style="font-size: 1.1rem; padding: 12px 32px;">🎮 게임 시작하기</button>
+    </div>
+
+    <!-- 2. Main Game Screen -->
+    <div id="game-screen" class="screen">
+      <div id="game-board">
+        <!-- Opponents Area -->
+        <div class="opponents-container">
+          <!-- AI 1: 민수 -->
+          <div class="player-area" id="area-ai1">
+            <div class="player-avatar">👦</div>
+            <div class="player-name">민수</div>
+            <div class="player-card-count" id="count-ai1">카드 7장</div>
+            <div class="cards-row" id="hand-ai1"></div>
+          </div>
+
+          <!-- AI 2: 지은 -->
+          <div class="player-area" id="area-ai2">
+            <div class="player-avatar">👧</div>
+            <div class="player-name">지은</div>
+            <div class="player-card-count" id="count-ai2">카드 7장</div>
+            <div class="cards-row" id="hand-ai2"></div>
+          </div>
+        </div>
+
+        <!-- Center Discard / Status Area -->
+        <div class="board-center">
+          <div class="status-msg" id="status-text">게임이 시작되었습니다. 민수의 카드를 1장 뽑으세요!</div>
+          <div class="discard-label">버린 카드 더미 (검증 완료된 문법)</div>
+          <div class="discard-pile" id="discard-pile">
+            <div style="font-size:0.85rem; color:#94A3B8;">아직 버려진 카드가 없습니다.</div>
+          </div>
+        </div>
+
+        <!-- User Area -->
+        <div class="player-area user-area" id="area-user">
+          <div style="display: flex; align-items: center; gap: 10px; width: 100%; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="player-avatar">🙋‍♂️</span>
+              <span class="player-name" style="font-size: 1.1rem;">나 (학생)</span>
+            </div>
+            <span class="player-card-count" id="count-user" style="background: var(--primary); color: white;">카드 7장</span>
+          </div>
+          <div class="cards-row user-hand" id="hand-user"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz Modal -->
+  <div class="modal-overlay" id="quiz-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="quiz-modal-title">
+          <span>📝</span> 문법 검증 퀴즈
+        </div>
+      </div>
+      <div id="quiz-question-text" style="font-size: 1rem; font-weight: 700; margin-bottom: 12px; line-height: 1.5;"></div>
+      
+      <div class="quiz-options" id="quiz-options"></div>
+
+      <!-- Teacher Feedback Box -->
+      <div class="teacher-box" id="teacher-feedback" style="display: none;">
+        <div class="teacher-avatar">👨‍🏫</div>
+        <div class="teacher-text" id="teacher-feedback-text"></div>
+      </div>
+
+      <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+        <button class="btn btn-primary" id="btn-quiz-next" style="display: none;">확인 및 진행 ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grammar Dictionary Modal -->
+  <div class="modal-overlay" id="dict-modal">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header">
+        <div class="modal-title">📖 중2 국어 문법 요약 사전</div>
+        <button class="btn btn-light" id="btn-close-dict" style="color:#333; padding:4px 10px;">✕</button>
+      </div>
+
+      <div class="dict-section">
+        <h3>1. 피동 표현 (Passive Expression)</h3>
+        <div class="dict-item">
+          <span class="badge badge-passive">피동의 개념</span> 주어가 다른 주체에 의해 동작을 <strong>당하거나 하게 되는</strong> 표현입니다. (반대: 능동)
+        </div>
+        <div class="dict-item">
+          <span class="badge badge-passive">피동 만드는 법</span>
+          <br>• <strong>파생적 피동:</strong> 어근 + 피동 파생 접사(<strong>-이-, -히-, -리-, -기-</strong>) / '-되다'
+          <br>• <strong>통사적 피동:</strong> <strong>'-아/어지다'</strong>, <strong>'-게 되다'</strong>
+        </div>
+        <div class="dict-item" style="border-left: 3px solid var(--danger);">
+          <span class="badge badge-passive" style="background:#FEE2E2; color:#991B1B;">⚠️ 자주 틀리는 오개념</span>
+          <br><strong>이중 피동 지양:</strong> 피동 표현을 두 번 중복해서 쓰면 잘못된 문장이 됩니다!
+          <br>❌ 잊혀지다 (-히- + -어지다) ➔ ⭕ 잊히다 / 잊어지다
+          <br>❌ 풀려지다 (-리- + -어지다) ➔ ⭕ 풀리다 / 풀어지다
+          <br>❌ 취소되어지다 (-되- + -어지다) ➔ ⭕ 취소되다
+        </div>
+      </div>
+
+      <div class="dict-section">
+        <h3>2. 인용 표현 (Quotation Expression)</h3>
+        <div class="dict-item">
+          <span class="badge badge-quote">직접 인용</span> 다른 사람의 말을 원래 형태 그대로 큰따옴표(" ")를 사용하여 가져오는 표현.
+          <br>👉 인용 격조사: <strong>'라고'</strong> (예: 친구가 "같이 가자."<strong>라고</strong> 말했다.)
+        </div>
+        <div class="dict-item">
+          <span class="badge badge-quote">간접 인용</span> 다른 사람의 말을 화자의 관점에서 형식에 맞추어 바꾸어 가져오는 표현.
+          <br>👉 인용 격조사: <strong>'고'</strong> (예: 친구가 같이 가자<strong>고</strong> 말했다.)
+        </div>
+        <div class="dict-item" style="border-left: 3px solid var(--danger);">
+          <span class="badge badge-quote" style="background:#FEF3C7; color:#92400E;">⚠️ 간접 인용 변환 주의</span>
+          <br>• <strong>어미 변환:</strong> 명령형 '-아라/어라' ➔ <strong>'-으라고'</strong> (예: "앉아라" ➔ 앉으라<strong>고</strong>)
+          <br>• <strong>지시어/대명사/시제 변환:</strong> '나' ➔ '자기/그', '지금' ➔ '그때', '오늘' ➔ '그날'
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result Modal -->
+  <div class="modal-overlay" id="result-modal">
+    <div class="modal-content" style="text-align: center;">
+      <div id="result-icon" style="font-size: 4rem; margin-bottom: 10px;">🏆</div>
+      <h2 id="result-title" style="font-size: 1.6rem; color: var(--primary-dark); margin-bottom: 10px;">게임 종료!</h2>
+      <p id="result-msg" style="font-size: 1rem; color: #475569; line-height: 1.6; margin-bottom: 20px;"></p>
+
+      <div class="teacher-box" id="result-teacher-box" style="margin-bottom: 20px; text-align: left;">
+        <div class="teacher-avatar">👨‍🏫</div>
+        <div class="teacher-text" id="result-teacher-text"></div>
+      </div>
+
+      <button class="btn btn-action" id="btn-result-restart" style="width: 100%; justify-content: center; padding: 12px;">🔄 다시 도전하기</button>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       Sound Effects (Web Audio API Synthesizer)
+       ========================================================================== */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+      }
+      init() {
+        if (!this.ctx) {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+      }
+      playCardFlip() {
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(150, this.ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.08);
+      }
+      playSuccess() {
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+        osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(now + 0.35);
+      }
+      playError() {
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.setValueAtTime(130, now + 0.15);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(now + 0.3);
+      }
+    }
+    const sounds = new SoundEngine();
+
+    /* ==========================================================================
+       Card Data & Grammar Quiz Definitions
+       ========================================================================== */
+    const CARD_PAIRS = [
+      {
+        pairId: 1,
+        type: '피동',
+        cardA: { tag: '피동01', text: '능동: "사냥꾼이 토끼를 잡았다."' },
+        cardB: { tag: '피동01', text: '피동: "토끼가 사냥꾼에게 잡혔다."' },
+        quiz: {
+          question: '능동문 "사냥꾼이 토끼를 잡았다."를 피동문으로 올바르게 바꾼 문장의 특징은?',
+          options: [
+            '피동 접사 "-히-"가 쓰여 파생적 피동문이 되었다.',
+            '피동 접사 "-기-"가 쓰여 파생적 피동문이 되었다.',
+            '"-어지다"가 쓰여 통사적 피동문이 되었다.'
+          ],
+          answer: 0,
+          explanation: '‘잡다’의 어근에 피동 접사 <strong>‘-히-’</strong>가 결합하여 ‘잡혔다(잡-+-히-+-었-+-다)’가 되었습니다.'
+        }
+      },
+      {
+        pairId: 2,
+        type: '피동',
+        cardA: { tag: '피동02', text: '능동: "경찰이 도둑을 쫓는다."' },
+        cardB: { tag: '피동02', text: '피동: "도둑이 경찰에게 쫓긴다."' },
+        quiz: {
+          question: '"경찰이 도둑을 쫓는다"를 피동문 "도둑이 경찰에게 쫓긴다"로 바꿀 때 사용된 피동 접사는?',
+          options: ['-이-', '-히-', '-기-'],
+          answer: 2,
+          explanation: '‘쫓다’의 어근 뒤에 피동 접사 <strong>‘-기-’</strong>가 붙어 ‘쫓기다’가 됩니다.'
+        }
+      },
+      {
+        pairId: 3,
+        type: '피동',
+        cardA: { tag: '피동03', text: '오문: "이 문제는 생각보다 잘 풀려진다."' },
+        cardB: { tag: '피동03', text: '정문: "이 문제는 생각보다 잘 풀린다."' },
+        quiz: {
+          question: '"풀려진다"라는 표현이 올바르지 않은 문법적 이유는 무엇일까요?',
+          options: [
+            '피동 접사 "-리-"와 "-어지다"가 중복된 이중 피동이기 때문이다.',
+            '피동 표현이 아니라 사동 표현이기 때문이다.',
+            '인용 조사를 잘못 사용했기 때문이다.'
+          ],
+          answer: 0,
+          explanation: '‘풀리다(-리-)’와 ‘-어지다’가 함께 쓰인 <strong>이중 피동</strong>입니다. 하나만 사용하여 ‘풀린다’ 또는 ‘풀어진다’로 수정해야 합니다.'
+        }
+      },
+      {
+        pairId: 4,
+        type: '피동',
+        cardA: { tag: '피동04', text: '오문: "행사가 비로 인해 취소되어집니다."' },
+        cardB: { tag: '피동04', text: '정문: "행사가 비로 인해 취소됩니다."' },
+        quiz: {
+          question: '"취소되어집니다"를 바른 문장 "취소됩니다"로 고쳐야 하는 이유는?',
+          options: [
+            '존댓말 표현이 틀렸기 때문이다.',
+            '피동의 의미를 나타내는 "-되다"와 "-어지다"가 겹친 이중 피동이기 때문이다.',
+            '주어와 서술어의 호응이 안 맞기 때문이다.'
+          ],
+          answer: 1,
+          explanation: '‘취소되다’ 자체로 피동의 의미를 가지므로, ‘-어지다’를 또 붙이는 것은 잘못된 <strong>이중 피동</strong>입니다.'
+        }
+      },
+      {
+        pairId: 5,
+        type: '피동',
+        cardA: { tag: '피동05', text: '문장: "날씨가 점차 따뜻해졌다."' },
+        cardB: { tag: '피동05', text: '설명: "통사적 피동표현(-어지다)의 예시이다."' },
+        quiz: {
+          question: '"따뜻해졌다(따뜻하-+-어졌다)"에 사용된 피동 표현의 종류는?',
+          options: [
+            '피동 접사에 의한 파생적 피동문',
+            '\'--어지다\'를 활용한 통사적(어휘적) 피동문',
+            '직접 인용문'
+          ],
+          answer: 1,
+          explanation: '형용사나 동사 어간 뒤에 <strong>‘-아/어지다’</strong>가 붙어 어떤 상태로 변화함을 나타내는 통사적 피동 표현입니다.'
+        }
+      },
+      {
+        pairId: 6,
+        type: '인용',
+        cardA: { tag: '인용06', text: '직접: 친구가 "같이 가자."라고 했다.' },
+        cardB: { tag: '인용06', text: '간접: 친구가 같이 가자고 했다.' },
+        quiz: {
+          question: '직접 인용문과 간접 인용문에 쓰이는 인용 격조사의 연결이 올바른 것은?',
+          options: [
+            '직접 인용: 라고 / 간접 인용: 고',
+            '직접 인용: 고 / 간접 인용: 라고',
+            '둘 다 \'하고\'를 사용해야 한다.'
+          ],
+          answer: 0,
+          explanation: '큰따옴표가 있는 직접 인용문 뒤에는 <strong>\'라고\'</strong>, 큰따옴표가 없는 간접 인용문 뒤에는 <strong>\'고\'</strong>를 씁니다.'
+        }
+      },
+      {
+        pairId: 7,
+        type: '인용',
+        cardA: { tag: '인용07', text: '직접: 선생님께서 "자리에 앉아라."라고 하셨다.' },
+        cardB: { tag: '인용07', text: '간접: 선생님께서 자리에 앉으라고 하셨다.' },
+        quiz: {
+          question: '직접 인용의 명령문 "앉아라"를 간접 인용문으로 바꿀 때 종결 어미는 어떻게 바뀌나요?',
+          options: [
+            '"-아라/어라" 그대로 유지된다.',
+            '"-으라고" 형태의 명령형 어미로 바뀐다.',
+            '"-자고" 형태의 청유형 어미로 바뀐다.'
+          ],
+          answer: 1,
+          explanation: '직접 인용의 명령형 어미 ‘-아라/어라’는 간접 인용문에서 <strong>‘-(으)라고’</strong>로 변경됩니다.'
+        }
+      },
+      {
+        pairId: 8,
+        type: '인용',
+        cardA: { tag: '인용08', text: '오문: 형은 나에게 "배가 고프다"고 말했다.' },
+        cardB: { tag: '인용08', text: '정문: 형은 나에게 "배가 고프다"라고 말했다.' },
+        quiz: {
+          question: '위 문장에서 오문인 이유와 바른 수정 방법은?',
+          options: [
+            '큰따옴표(" ")가 있는 직접 인용이므로 \'고\' 대신 \'라고\'를 써야 한다.',
+            '큰따옴표가 있으므로 간접 인용 조사를 써야 한다.',
+            '형이라는 호칭을 바꿔야 한다.'
+          ],
+          answer: 0,
+          explanation: '말한 내용을 그대로 따온 큰따옴표가 있을 때에는 직접 인용 격조사인 <strong>\'라고\'</strong>를 써야 올바릅니다.'
+        }
+      },
+      {
+        pairId: 9,
+        type: '인용',
+        cardA: { tag: '인용09', text: '오문: 영희는 나중에 다시 오겠라고 전했다.' },
+        cardB: { tag: '인용09', text: '정문: 영희는 나중에 다시 오겠다고 전했다.' },
+        quiz: {
+          question: '간접 인용문 "영희는 나중에 다시 오겠라고 전했다"가 틀린 이유는?',
+          options: [
+            '큰따옴표가 없는 간접 인용문에는 \'라고\'가 아니라 \'고\'가 결합해야 한다.',
+            '피동 표현이 빠졌기 때문이다.',
+            '높임법이 잘못되었기 때문이다.'
+          ],
+          answer: 0,
+          explanation: '큰따옴표가 없는 간접 인용 표현이므로 ‘오겠다’ 뒤에 인용 조사 <strong>‘고’</strong>가 붙어 <strong>‘오겠다고’</strong>가 됩니다.'
+        }
+      },
+      {
+        pairId: 10,
+        type: '인용',
+        cardA: { tag: '인용10', text: '직접: 철수가 "나는 지금 바빠."라고 했다.' },
+        cardB: { tag: '인용10', text: '간접: 철수가 자기는 그때 바쁘다고 했다.' },
+        quiz: {
+          question: '직접 인용문을 간접 인용문으로 바꿀 때 함께 바꾸어야 할 맥락 요소가 아닌 것은?',
+          options: [
+            '대명사 (나 ➔ 자기/그)',
+            '시간 지시어 (지금 ➔ 그때)',
+            '문장의 주제나 단어의 기본 뜻'
+          ],
+          answer: 2,
+          explanation: '간접 인용으로 바꿀 때는 전달하는 화자의 시점에 맞추어 <strong>대명사(나➔자기), 시간 표현(지금➔그때)</strong>을 적절히 변환해야 합니다.'
+        }
+      }
+    ];
+
+    const JOKER_RESCUE_QUIZ = {
+      question: '[조커 탈출 구제 퀴즈] 이중 피동인 "잊혀진 계절"이나 "생각되어지다"가 왜 오개념인지 문법적 이유를 설명하는 것으로 바른 것은?',
+      options: [
+        '피동 접사(-히-, -되-)와 피동 표현(-어지다)이 중복 사용된 이중 피동이기 때문이다.',
+        '직접 인용과 간접 인용 조사가 섞였기 때문이다.',
+        '주어가 생략되어 의미가 불분명하기 때문이다.'
+      ],
+      answer: 0,
+      explanation: '피동 표현은 하나만 사용해도 충분합니다! 중복 사용된 이중 피동을 파악하고 정정할 수 있다면 오늘 학습 성공입니다!'
+    };
+
+    /* ==========================================================================
+       Game State Management
+       ========================================================================== */
+    class GrammarCardGame {
+      constructor() {
+        this.players = [
+          { id: 'user', name: '나', avatar: '🙋‍♂️', hand: [], isAI: false },
+          { id: 'ai1', name: '민수', avatar: '👦', hand: [], isAI: true },
+          { id: 'ai2', name: '지은', avatar: '👧', hand: [], isAI: true }
+        ];
+        this.turnIndex = 0; // 0: User, 1: AI1, 2: AI2
+        this.discardedPairs = [];
+        this.pendingPairCheck = null;
+        this.isProcessing = false;
+      }
+
+      initGame() {
+        this.discardedPairs = [];
+        this.turnIndex = 0;
+        this.isProcessing = false;
+
+        // Create Deck (20 Pair Cards + 1 Joker)
+        let deck = [];
+        CARD_PAIRS.forEach(pair => {
+          deck.push({ id: `P${pair.pairId}_A`, pairId: pair.pairId, tag: pair.cardA.tag, text: pair.cardA.text, type: pair.type, isJoker: false });
+          deck.push({ id: `P${pair.pairId}_B`, pairId: pair.pairId, tag: pair.cardB.tag, text: pair.cardB.text, type: pair.type, isJoker: false });
+        });
+        
+        // Add Joker
+        deck.push({
+          id: 'JOKER',
+          pairId: -1,
+          tag: 'JOKER',
+          text: '😈 문법 도둑\n(이중 피동의 악마)',
+          type: '조커',
+          isJoker: true
+        });
+
+        // Shuffle Deck
+        deck.sort(() => Math.random() - 0.5);
+
+        // Reset Hands
+        this.players.forEach(p => p.hand = []);
+
+        // Deal Cards
+        let pIdx = 0;
+        while (deck.length > 0) {
+          this.players[pIdx].hand.push(deck.pop());
+          pIdx = (pIdx + 1) % this.players.length;
+        }
+
+        this.updateUI();
+        
+        // Initial Pair Removal Phase for each player
+        setTimeout(() => {
+          this.processInitialPairs();
+        }, 600);
+      }
+
+      processInitialPairs() {
+        let anyRemoved = false;
+
+        this.players.forEach(player => {
+          const matchedPairIds = this.findPairIdsInHand(player.hand);
+          if (matchedPairIds.length > 0) {
+            anyRemoved = true;
+            matchedPairIds.forEach(pId => {
+              // Extract cards from hand
+              const cardAIdx = player.hand.findIndex(c => c.pairId === pId);
+              const cardA = player.hand.splice(cardAIdx, 1)[0];
+              const cardBIdx = player.hand.findIndex(c => c.pairId === pId);
+              const cardB = player.hand.splice(cardBIdx, 1)[0];
+
+              this.discardedPairs.push({ pairId: pId, cards: [cardA, cardB] });
+            });
+          }
+        });
+
+        if (anyRemoved) {
+          sounds.playSuccess();
+          this.setStatusText('처음 나눠받은 카드 중 짝이 맞는 문법 카드를 버렸습니다!');
+        }
+
+        this.updateUI();
+        this.checkGameEnd();
+      }
+
+      findPairIdsInHand(hand) {
+        const counts = {};
+        const pairs = [];
+        hand.forEach(c => {
+          if (!c.isJoker) {
+            counts[c.pairId] = (counts[c.pairId] || 0) + 1;
+            if (counts[c.pairId] === 2) {
+              pairs.push(c.pairId);
+            }
+          }
+        });
+        return pairs;
+      }
+
+      updateUI() {
+        // Update Card Counts & Hands
+        this.players.forEach(p => {
+          const countEl = document.getElementById(`count-${p.id}`);
+          const handEl = document.getElementById(`hand-${p.id}`);
+          const areaEl = document.getElementById(`area-${p.id}`);
+
+          if (countEl) countEl.textContent = `카드 ${p.hand.length}장`;
+
+          if (areaEl) {
+            if (this.players[this.turnIndex].id === p.id) {
+              areaEl.classList.add('active-turn');
+            } else {
+              areaEl.classList.remove('active-turn');
+            }
+          }
+
+          if (handEl) {
+            handEl.innerHTML = '';
+            p.hand.forEach((card, index) => {
+              const cardEl = document.createElement('div');
+              cardEl.className = `card ${card.isJoker ? 'joker' : ''}`;
+
+              if (p.isAI) {
+                // AI hand cards are hidden (facedown)
+                cardEl.classList.add('back');
+                // Allow user to click on AI1's card when it's user's turn
+                if (this.turnIndex === 0 && p.id === 'ai1') {
+                  cardEl.style.cursor = 'pointer';
+                  cardEl.onclick = () => this.userDrawsCard(index);
+                }
+              } else {
+                // Player hand cards are visible
+                cardEl.innerHTML = `
+                  <span class="card-tag">${card.tag}</span>
+                  <span class="card-text">${card.text}</span>
+                `;
+              }
+              handEl.appendChild(cardEl);
+            });
+          }
+        });
+
+        // Discard Pile UI
+        const discardPileEl = document.getElementById('discard-pile');
+        if (discardPileEl) {
+          if (this.discardedPairs.length === 0) {
+            discardPileEl.innerHTML = `<div style="font-size:0.85rem; color:#94A3B8;">아직 버려진 카드가 없습니다.</div>`;
+          } else {
+            discardPileEl.innerHTML = '';
+            const recent = this.discardedPairs.slice(-3);
+            recent.forEach(dp => {
+              const miniCard = document.createElement('div');
+              miniCard.className = 'card card-match-anim';
+              miniCard.style.width = '65px';
+              miniCard.style.height = '90px';
+              miniCard.style.fontSize = '0.65rem';
+              miniCard.innerHTML = `
+                <span class="card-tag">${dp.cards[0].tag}</span>
+                <span class="card-text">${dp.cards[0].type} 완료</span>
+              `;
+              discardPileEl.appendChild(miniCard);
+            });
+          }
+        }
+      }
+
+      setStatusText(msg) {
+        const el = document.getElementById('status-text');
+        if (el) el.textContent = msg;
+      }
+
+      /* Turn Logic */
+      userDrawsCard(cardIndex) {
+        if (this.turnIndex !== 0 || this.isProcessing) return;
+
+        const ai1 = this.players[1];
+        if (ai1.hand.length === 0) return;
+
+        this.isProcessing = true;
+        sounds.playCardFlip();
+
+        // Draw card from AI 1 (민수)
+        const drawnCard = ai1.hand.splice(cardIndex, 1)[0];
+        const user = this.players[0];
+        user.hand.push(drawnCard);
+
+        this.updateUI();
+
+        // Check if user made a pair
+        const userPairIds = this.findPairIdsInHand(user.hand);
+        if (userPairIds.length > 0) {
+          const matchedPairId = userPairIds[0];
+          // Trigger Quiz Popup for user verification!
+          setTimeout(() => {
+            this.triggerQuizForPair(matchedPairId, user);
+          }, 500);
+        } else {
+          this.setStatusText(`민수에게서 카드를 1장 가져왔습니다. (짝 없음)`);
+          setTimeout(() => {
+            this.nextTurn();
+          }, 1200);
+        }
+      }
+
+      triggerQuizForPair(pairId, player) {
+        const pairData = CARD_PAIRS.find(p => p.pairId === pairId);
+        if (!pairData) return;
+
+        this.pendingPairCheck = { pairId, player };
+
+        const modal = document.getElementById('quiz-modal');
+        const qText = document.getElementById('quiz-question-text');
+        const optionsEl = document.getElementById('quiz-options');
+        const feedbackEl = document.getElementById('teacher-feedback');
+        const nextBtn = document.getElementById('btn-quiz-next');
+
+        qText.innerHTML = `<span class="badge ${pairData.type === '피동' ? 'badge-passive' : 'badge-quote'}">${pairData.type} 문법 검증</span><br>${pairData.quiz.question}`;
+        optionsEl.innerHTML = '';
+        feedbackEl.style.display = 'none';
+        nextBtn.style.display = 'none';
+
+        pairData.quiz.options.forEach((optText, i) => {
+          const btn = document.createElement('button');
+          btn.className = 'quiz-option';
+          btn.textContent = `${i + 1}. ${optText}`;
+          btn.onclick = () => this.handleQuizAnswer(i, pairData.quiz);
+          optionsEl.appendChild(btn);
+        });
+
+        modal.classList.add('active');
+      }
+
+      handleQuizAnswer(selectedIndex, quizData) {
+        const options = document.querySelectorAll('.quiz-option');
+        options.forEach(opt => opt.style.pointerEvents = 'none');
+
+        const feedbackEl = document.getElementById('teacher-feedback');
+        const feedbackText = document.getElementById('teacher-feedback-text');
+        const nextBtn = document.getElementById('btn-quiz-next');
+
+        if (selectedIndex === quizData.answer) {
+          sounds.playSuccess();
+          options[selectedIndex].classList.add('correct');
+          feedbackText.innerHTML = `<strong>정답입니다! 👏</strong><br>${quizData.explanation}`;
+        } else {
+          sounds.playError();
+          options[selectedIndex].classList.add('incorrect');
+          options[quizData.answer].classList.add('correct');
+          feedbackText.innerHTML = `<strong>오개념 정정 💡</strong><br>${quizData.explanation}`;
+        }
+
+        feedbackEl.style.display = 'flex';
+        nextBtn.style.display = 'inline-flex';
+
+        nextBtn.onclick = () => {
+          document.getElementById('quiz-modal').classList.remove('active');
+          this.resolvePendingPair();
+        };
+      }
+
+      resolvePendingPair() {
+        if (!this.pendingPairCheck) return;
+        const { pairId, player } = this.pendingPairCheck;
+
+        const cardAIdx = player.hand.findIndex(c => c.pairId === pairId);
+        const cardA = player.hand.splice(cardAIdx, 1)[0];
+        const cardBIdx = player.hand.findIndex(c => c.pairId === pairId);
+        const cardB = player.hand.splice(cardBIdx, 1)[0];
+
+        this.discardedPairs.push({ pairId, cards: [cardA, cardB] });
+        this.pendingPairCheck = null;
+
+        this.setStatusText(`문법 검증 완료! 짝이 맞는 카드를 버렸습니다.`);
+        this.updateUI();
+
+        if (this.checkGameEnd()) return;
+
+        setTimeout(() => {
+          this.nextTurn();
+        }, 1000);
+      }
+
+      nextTurn() {
+        this.turnIndex = (this.turnIndex + 1) % this.players.length;
+
+        // Skip players who have 0 cards
+        let loopCount = 0;
+        while (this.players[this.turnIndex].hand.length === 0 && loopCount < 3) {
+          this.turnIndex = (this.turnIndex + 1) % this.players.length;
+          loopCount++;
+        }
+
+        if (this.checkGameEnd()) return;
+
+        this.updateUI();
+
+        if (this.turnIndex === 0) {
+          this.isProcessing = false;
+          this.setStatusText('당신의 차례입니다! 민수(왼쪽)의 카드를 1장 뽑으세요.');
+        } else {
+          this.isProcessing = true;
+          setTimeout(() => {
+            this.playAITurn();
+          }, 1200);
+        }
+      }
+
+      playAITurn() {
+        const currentAI = this.players[this.turnIndex];
+        // Target is the previous player who has cards
+        let targetIndex = (this.turnIndex - 1 + this.players.length) % this.players.length;
+        while (this.players[targetIndex].hand.length === 0 && targetIndex !== this.turnIndex) {
+          targetIndex = (targetIndex - 1 + this.players.length) % this.players.length;
+        }
+
+        const targetPlayer = this.players[targetIndex];
+        if (targetPlayer.hand.length === 0) {
+          this.nextTurn();
+          return;
+        }
+
+        // Randomly pick a card from target player
+        const randIdx = Math.floor(Math.random() * targetPlayer.hand.length);
+        sounds.playCardFlip();
+        const drawnCard = targetPlayer.hand.splice(randIdx, 1)[0];
+        currentAI.hand.push(drawnCard);
+
+        this.setStatusText(`${currentAI.name}(이)가 ${targetPlayer.name}의 카드를 1장 가져왔습니다.`);
+        this.updateUI();
+
+        // Check if AI made a pair
+        const aiPairs = this.findPairIdsInHand(currentAI.hand);
+        if (aiPairs.length > 0) {
+          const pId = aiPairs[0];
+          setTimeout(() => {
+            const cAIdx = currentAI.hand.findIndex(c => c.pairId === pId);
+            const cA = currentAI.hand.splice(cAIdx, 1)[0];
+            const cBIdx = currentAI.hand.findIndex(c => c.pairId === pId);
+            const cB = currentAI.hand.splice(cBIdx, 1)[0];
+
+            this.discardedPairs.push({ pairId: pId, cards: [cA, cB] });
+            sounds.playSuccess();
+            this.setStatusText(`${currentAI.name}(이)가 문법 짝을 맞아 카드를 버렸습니다!`);
+            this.updateUI();
+
+            if (this.checkGameEnd()) return;
+
+            setTimeout(() => this.nextTurn(), 1200);
+          }, 1000);
+        } else {
+          if (this.checkGameEnd()) return;
+          setTimeout(() => this.nextTurn(), 1200);
+        }
+      }
+
+      checkGameEnd() {
+        const playersWithCards = this.players.filter(p => p.hand.length > 0);
+
+        // Game ends when only 1 player has cards (or only joker remains)
+        if (playersWithCards.length <= 1) {
+          const loser = playersWithCards[0] || this.players[0];
+          this.handleGameEnd(loser);
+          return true;
+        }
+        return false;
+      }
+
+      handleGameEnd(loser) {
+        if (loser.id === 'user') {
+          // If User holds Joker, offer Joker Rescue Quiz!
+          this.triggerJokerRescueQuiz();
+        } else {
+          // User Won!
+          sounds.playSuccess();
+          this.showResultModal(
+            '🎉 승리했습니다!',
+            `축하합니다! ${loser.name}(이)가 [문법 도둑(조커)]을 가지게 되면서 탈출에 성공했습니다!`,
+            '🏆 피동표현과 인용표현의 오개념을 완벽히 정복하셨습니다!'
+          );
+        }
+      }
+
+      triggerJokerRescueQuiz() {
+        const modal = document.getElementById('quiz-modal');
+        const qText = document.getElementById('quiz-question-text');
+        const optionsEl = document.getElementById('quiz-options');
+        const feedbackEl = document.getElementById('teacher-feedback');
+        const nextBtn = document.getElementById('btn-quiz-next');
+
+        qText.innerHTML = `<span class="badge" style="background:#FEE2E2; color:#991B1B;">🚨 문법 도둑 패배 위기!</span><br>${JOKER_RESCUE_QUIZ.question}`;
+        optionsEl.innerHTML = '';
+        feedbackEl.style.display = 'none';
+        nextBtn.style.display = 'none';
+
+        JOKER_RESCUE_QUIZ.options.forEach((optText, i) => {
+          const btn = document.createElement('button');
+          btn.className = 'quiz-option';
+          btn.textContent = `${i + 1}. ${optText}`;
+          btn.onclick = () => {
+            const options = document.querySelectorAll('.quiz-option');
+            options.forEach(o => o.style.pointerEvents = 'none');
+
+            if (i === JOKER_RESCUE_QUIZ.answer) {
+              sounds.playSuccess();
+              options[i].classList.add('correct');
+              feedbackText.innerHTML = `<strong>역전 승리 성공! ⚡</strong><br>${JOKER_RESCUE_QUIZ.explanation}`;
+              
+              nextBtn.textContent = '극적 승리 결과 보기 ➔';
+              nextBtn.onclick = () => {
+                modal.classList.remove('active');
+                this.showResultModal(
+                  '⚡ 패배 구제 극적 승리!',
+                  '조커 카드를 마지막까지 가졌지만, [조커 구제 퀴즈]의 이중 피동 오개념 원리를 완벽히 설명하여 역전 승리했습니다!',
+                  '👏 피동 문법의 이중 피동 오류를 정확히 파악하고 있네요!'
+                );
+              };
+            } else {
+              sounds.playError();
+              options[i].classList.add('incorrect');
+              options[JOKER_RESCUE_QUIZ.answer].classList.add('correct');
+              feedbackText.innerHTML = `<strong>아쉽습니다! 😢</strong><br>${JOKER_RESCUE_QUIZ.explanation}`;
+
+              nextBtn.textContent = '결과 보기 ➔';
+              nextBtn.onclick = () => {
+                modal.classList.remove('active');
+                this.showResultModal(
+                  '💀 패배! 문법 도둑 당첨',
+                  '마지막까지 [문법 도둑] 카드를 가지게 되었습니다. 문법 사전을 통해 이중 피동과 인용 조사를 다시 복습해 보세요!',
+                  '📚 다음 판에서는 이중 피동과 간접 인용 조사를 주의해서 도전해 보세요!'
+                );
+              };
+            }
+            feedbackEl.style.display = 'flex';
+            nextBtn.style.display = 'inline-flex';
+          };
+          optionsEl.appendChild(btn);
+        });
+
+        const feedbackText = document.getElementById('teacher-feedback-text');
+        modal.classList.add('active');
+      }
+
+      showResultModal(title, msg, teacherComment) {
+        document.getElementById('result-title').textContent = title;
+        document.getElementById('result-msg').textContent = msg;
+        document.getElementById('result-teacher-text').innerHTML = `<strong>김국어 선생님의 총평:</strong><br>${teacherComment}`;
+        document.getElementById('result-modal').classList.add('active');
+      }
+    }
+
+    /* ==========================================================================
+       DOM Event Handlers & Initialization
+       ========================================================================== */
+    const game = new GrammarCardGame();
+
+    document.getElementById('btn-start-game').addEventListener('click', () => {
+      document.getElementById('start-screen').classList.remove('active');
+      document.getElementById('game-screen').classList.add('active');
+      game.initGame();
+    });
+
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      if (confirm('게임문법 도둑 잡기를 다시 시작하시겠습니까?')) {
+        document.getElementById('result-modal').classList.remove('active');
+        document.getElementById('quiz-modal').classList.remove('active');
+        game.initGame();
+      }
+    });
+
+    document.getElementById('btn-result-restart').addEventListener('click', () => {
+      document.getElementById('result-modal').classList.remove('active');
+      game.initGame();
+    });
+
+    // Grammar Dictionary Modal Controls
+    const dictModal = document.getElementById('dict-modal');
+    document.getElementById('btn-dict').addEventListener('click', () => {
+      dictModal.classList.add('active');
+    });
+    document.getElementById('btn-close-dict').addEventListener('click', () => {
+      dictModal.classList.remove('active');
+    });
+  </script>
+</body>
+</html>
